@@ -39,7 +39,5 @@ export default function ReactEditor() {
     [editorRef]
   );
 
-  return (
-    <div style={{ width: '1500px', height: '1000px' }} ref={containerRef}></div>
-  );
+  return <div style={{ position: 'inherit' }} ref={containerRef}></div>;
 }
