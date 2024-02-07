@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
           crossorigin="anonymous"
         />
       </Head>
-      <body className="h-screen w-screen">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
