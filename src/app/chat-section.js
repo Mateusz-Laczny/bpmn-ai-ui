@@ -2,14 +2,26 @@ import { Stack } from 'react-bootstrap';
 import Message from './message';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Form from 'react-bootstrap/Form';
+import { useState } from 'react';
 
 function ChatSection() {
-  const messages = [
+  const [newMessage, setNewMessage] = useState('');
+  const [messages, setMessages] = useState([
     { user: 'User', text: 'Hello!' },
     { user: 'BPMN Asisstant', text: 'Hello, this is BPMN Assistant!' },
     { user: 'BPMN Asisstant', text: 'How are you today?' },
     { user: 'User', text: "I'm fine, thanks" },
-  ];
+  ]);
+  const onInput = ({ target: { value } }) => setNewMessage(value);
+  const onKeyPress = ({ key: keyCode }) => {
+    if (keyCode !== 'Enter' || newMessage === '') {
+      return;
+    }
+
+    messages.push({ user: 'User', text: newMessage });
+    setMessages(messages);
+    setNewMessage('');
+  };
 
   return (
     <Stack gap={4} className="py-3">
@@ -20,10 +32,18 @@ function ChatSection() {
           key={index}
         ></Message>
       ))}
-      <InputGroup>
-        <InputGroup.Text>Message</InputGroup.Text>
-        <Form.Control as="textarea" aria-label="Message" />
-      </InputGroup>
+      <Form>
+        <InputGroup>
+          <InputGroup.Text>Message</InputGroup.Text>
+          <Form.Control
+            as="textarea"
+            aria-label="Message"
+            value={newMessage}
+            onInput={onInput}
+            onKeyDown={onKeyPress}
+          />
+        </InputGroup>
+      </Form>
     </Stack>
   );
 }
