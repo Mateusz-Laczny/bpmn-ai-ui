@@ -9,9 +9,9 @@ import ChatSection from './chat-section';
 
 export default function Home() {
   return (
-    <main className="my-3">
-      <Container fluid>
-        <Row>
+    <main style={{ height: '100%' }}>
+      <Container fluid style={{ height: '100%' }}>
+        <Row style={{ height: '100%' }}>
           <Col xs={8}>
             <BpmnEditor></BpmnEditor>
           </Col>

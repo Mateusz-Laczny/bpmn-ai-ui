@@ -24,15 +24,24 @@ function ChatSection() {
   };
 
   return (
-    <Stack gap={4} className="py-3">
-      {messages.map((message, index) => (
-        <Message
-          user={message.user}
-          messageText={message.text}
-          key={index}
-        ></Message>
-      ))}
-      <Form>
+    <div style={{ position: 'relative', height: '100%' }}>
+      <Stack gap={4} className="py-3">
+        {messages.map((message, index) => (
+          <Message
+            user={message.user}
+            messageText={message.text}
+            key={index}
+          ></Message>
+        ))}
+      </Stack>
+      <Form
+        style={{
+          position: 'absolute',
+          display: 'border-box',
+          bottom: '16px',
+          width: '100%',
+        }}
+      >
         <InputGroup>
           <InputGroup.Text>Message</InputGroup.Text>
           <Form.Control
@@ -44,7 +53,7 @@ function ChatSection() {
           />
         </InputGroup>
       </Form>
-    </Stack>
+    </div>
   );
 }
 
