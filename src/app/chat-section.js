@@ -2,25 +2,50 @@ import { Stack } from 'react-bootstrap';
 import Message from './message';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Form from 'react-bootstrap/Form';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function ChatSection() {
   const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState([
-    { user: 'User', text: 'Hello!' },
-    { user: 'BPMN Asisstant', text: 'Hello, this is BPMN Assistant!' },
-    { user: 'BPMN Asisstant', text: 'How are you today?' },
-    { user: 'User', text: "I'm fine, thanks" },
-  ]);
+  const [messages, setMessages] = useState([]);
+
+  const fetchResponse = async (requestText) => {
+    const response = await fetch(
+      'http://localhost:8080/generate/v2/send/message',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: requestText }),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    const responseBody = data.messages[data.messages.length - 1];
+    return {
+      user: 'Assistant',
+      text: responseBody.content,
+    };
+  };
+
   const onInput = ({ target: { value } }) => setNewMessage(value);
   const onKeyPress = ({ key: keyCode }) => {
     if (keyCode !== 'Enter' || newMessage === '') {
       return;
     }
 
-    messages.push({ user: 'User', text: newMessage });
-    setMessages(messages);
+    const newMessageProperties = { user: 'User', text: newMessage };
+    const messagesWithUserMessage = [...messages];
+    messagesWithUserMessage.push(newMessageProperties);
+    setMessages(messagesWithUserMessage);
     setNewMessage('');
+    fetchResponse(newMessageProperties.text).then((assistantMessage) => {
+      const messagesWithAssistantResponse = [...messagesWithUserMessage];
+      messagesWithAssistantResponse.push(assistantMessage);
+      setMessages(messagesWithAssistantResponse);
+    });
   };
 
   return (
