@@ -1,27 +1,15 @@
 'use client';
 
-import ReactBpmn from 'react-bpmn';
+import BpmnViewer from './bpmn-viewer';
 
-import React, { useEffect, useRef } from 'react';
-
-async function openDiagram(modeler, xml) {
-  try {
-    await modeler.importXML('');
-
-    container.removeClass('with-error').addClass('with-diagram');
-  } catch (err) {
-    container.removeClass('with-diagram').addClass('with-error');
-
-    container.find('.error pre').text(err.message);
-
-    console.error(err);
-  }
+function onError(err) {
+  console.log('failed to show diagram', err);
 }
 
-export default function ReactEditor() {
+export default function BpmnEditor({ modelXml }) {
   return (
     <div style={{ height: '100%' }}>
-      <ReactBpmn url="https://cdn.statically.io/gh/bpmn-io/bpmn-js-examples/dfceecba/url-viewer/resources/pizza-collaboration.bpmn" />
+      <BpmnViewer modelXml={modelXml} onError={onError} />
     </div>
   );
 }

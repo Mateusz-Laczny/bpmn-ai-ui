@@ -2,9 +2,9 @@ import { Stack } from 'react-bootstrap';
 import Message from './message';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Form from 'react-bootstrap/Form';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-function ChatSection() {
+function ChatSection({ onModelUpdate }) {
   const [newMessage, setNewMessage] = useState('');
   const [messages, setMessages] = useState([]);
 
@@ -23,10 +23,10 @@ function ChatSection() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    const responseBody = data.messages[data.messages.length - 1];
+    onModelUpdate(data.bpmnXml);
     return {
       user: 'Assistant',
-      text: responseBody.content,
+      text: data.responseContent,
     };
   };
 
@@ -50,7 +50,7 @@ function ChatSection() {
 
   return (
     <div style={{ position: 'relative', height: '100%' }}>
-      <Stack gap={4} className="py-3">
+      <Stack gap={4}>
         {messages.map((message, index) => (
           <Message
             user={message.user}
