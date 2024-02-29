@@ -1,4 +1,4 @@
-import { Stack } from 'react-bootstrap';
+import { Col, Stack, Button } from 'react-bootstrap';
 import Message from './message';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Form from 'react-bootstrap/Form';
@@ -28,6 +28,12 @@ function ChatSection({ onModelUpdate }) {
       user: 'Assistant',
       text: data.responseContent,
     };
+  };
+
+  const reset = () => {
+    fetch('http://localhost:8080/generate/v2/clear', { method: 'DELETE' }).then(
+      (_response) => setMessages([])
+    );
   };
 
   const onInput = ({ target: { value } }) => setNewMessage(value);
@@ -67,16 +73,19 @@ function ChatSection({ onModelUpdate }) {
           width: '100%',
         }}
       >
-        <InputGroup>
-          <InputGroup.Text>Message</InputGroup.Text>
+        <Stack direction="horizontal" gap={3}>
           <Form.Control
             as="textarea"
             aria-label="Message"
             value={newMessage}
             onInput={onInput}
             onKeyDown={onKeyPress}
+            className="me-auto"
           />
-        </InputGroup>
+          <Button variant="danger" onClick={reset}>
+            Reset
+          </Button>
+        </Stack>
       </Form>
     </div>
   );
