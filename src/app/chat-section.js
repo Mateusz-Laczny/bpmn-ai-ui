@@ -2,11 +2,21 @@ import { Col, Stack, Button } from 'react-bootstrap';
 import Message from './message';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Form from 'react-bootstrap/Form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function ChatSection({ onModelUpdate }) {
   const [newMessage, setNewMessage] = useState('');
   const [messages, setMessages] = useState([]);
+
+  const startNewConversation = () => {
+    fetch('http://localhost:8080/generate/v2/start', { method: 'POST' }).then(
+      (_response) => setMessages([])
+    );
+  };
+
+  useEffect(() => {
+    startNewConversation();
+  }, []);
 
   const fetchResponse = async (requestText) => {
     const response = await fetch(
@@ -28,12 +38,6 @@ function ChatSection({ onModelUpdate }) {
       user: 'Assistant',
       text: data.responseContent,
     };
-  };
-
-  const reset = () => {
-    fetch('http://localhost:8080/generate/v2/clear', { method: 'DELETE' }).then(
-      (_response) => setMessages([])
-    );
   };
 
   const onInput = ({ target: { value } }) => setNewMessage(value);
@@ -82,7 +86,7 @@ function ChatSection({ onModelUpdate }) {
             onKeyDown={onKeyPress}
             className="me-auto"
           />
-          <Button variant="danger" onClick={reset}>
+          <Button variant="danger" onClick={startNewConversation}>
             Reset
           </Button>
         </Stack>
