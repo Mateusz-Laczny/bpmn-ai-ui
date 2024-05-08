@@ -8,13 +8,15 @@ function ChatSection({ messages, onMessageSent, onReset }) {
   const [newMessage, setNewMessage] = useState('');
 
   const onInput = ({ target: { value } }) => setNewMessage(value);
-  const onKeyPress = ({ key: keyCode }) => {
-    if (keyCode !== 'Enter' || newMessage === '') {
-      return;
+  const onKeyPress = (event) => {
+    console.log(event);
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (newMessage.trim() !== '') {
+        onMessageSent(newMessage);
+        setNewMessage('');
+      }
     }
-
-    onMessageSent(newMessage);
-    setNewMessage('');
   };
 
   return (
