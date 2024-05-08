@@ -7,6 +7,7 @@ import Col from 'react-bootstrap/Col';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ChatSection from './chat-section';
 import { useState } from 'react';
+import ChatAndLogsWorkspace from './chat-and-logs-workspace';
 
 export default function Home() {
   const [modelXml, setModelXml] = useState(undefined);
@@ -30,8 +31,13 @@ export default function Home() {
               </div>
             )}
           </Col>
-          <Col className="bg-primary-subtle border border-dark-subtle rounded-3 mx-3 my-3">
-            <ChatSection onModelUpdate={onModelUpdate}></ChatSection>
+          <Col
+            className="border border-dark-subtle rounded-3 mx-3 my-3"
+            style={{ backgroundColor: 'black', position: 'relative' }}
+          >
+            <ChatAndLogsWorkspace
+              onModelUpdate={onModelUpdate}
+            ></ChatAndLogsWorkspace>
           </Col>
         </Row>
       </Container>

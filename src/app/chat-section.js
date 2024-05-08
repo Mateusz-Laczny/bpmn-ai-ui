@@ -4,41 +4,8 @@ import InputGroup from 'react-bootstrap/InputGroup';
 import Form from 'react-bootstrap/Form';
 import { useState, useEffect } from 'react';
 
-function ChatSection({ onModelUpdate }) {
+function ChatSection({ messages, onMessageSent, onReset }) {
   const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-
-  const startNewConversation = () => {
-    fetch('http://localhost:8080/generate/v2/start', { method: 'POST' }).then(
-      (_response) => setMessages([])
-    );
-  };
-
-  useEffect(() => {
-    startNewConversation();
-  }, []);
-
-  const fetchResponse = async (requestText) => {
-    const response = await fetch(
-      'http://localhost:8080/generate/v2/send/message',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: requestText }),
-      }
-    );
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const data = await response.json();
-    onModelUpdate(data.bpmnXml);
-    return {
-      user: 'Assistant',
-      text: data.responseContent,
-    };
-  };
 
   const onInput = ({ target: { value } }) => setNewMessage(value);
   const onKeyPress = ({ key: keyCode }) => {
@@ -46,21 +13,21 @@ function ChatSection({ onModelUpdate }) {
       return;
     }
 
-    const newMessageProperties = { user: 'User', text: newMessage };
-    const messagesWithUserMessage = [...messages];
-    messagesWithUserMessage.push(newMessageProperties);
-    setMessages(messagesWithUserMessage);
+    onMessageSent(newMessage);
     setNewMessage('');
-    fetchResponse(newMessageProperties.text).then((assistantMessage) => {
-      const messagesWithAssistantResponse = [...messagesWithUserMessage];
-      messagesWithAssistantResponse.push(assistantMessage);
-      setMessages(messagesWithAssistantResponse);
-    });
   };
 
   return (
-    <div style={{ position: 'relative', height: '100%' }}>
-      <Stack gap={4}>
+    <div>
+      <Stack
+        gap={4}
+        style={{
+          position: 'absolute',
+          width: '95%',
+          height: '80%',
+          overflowY: 'auto',
+        }}
+      >
         {messages.map((message, index) => (
           <Message
             user={message.user}
@@ -70,12 +37,8 @@ function ChatSection({ onModelUpdate }) {
         ))}
       </Stack>
       <Form
-        style={{
-          position: 'absolute',
-          display: 'border-box',
-          bottom: '16px',
-          width: '100%',
-        }}
+        className="mt-2"
+        style={{ position: 'absolute', bottom: '16px', width: '95%' }}
       >
         <Stack direction="horizontal" gap={3}>
           <Form.Control
@@ -86,7 +49,7 @@ function ChatSection({ onModelUpdate }) {
             onKeyDown={onKeyPress}
             className="me-auto"
           />
-          <Button variant="danger" onClick={startNewConversation}>
+          <Button variant="danger" onClick={onReset}>
             Reset
           </Button>
         </Stack>
