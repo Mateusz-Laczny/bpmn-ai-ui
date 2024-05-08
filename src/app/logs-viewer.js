@@ -1,6 +1,8 @@
 import ListGroup from 'react-bootstrap/ListGroup';
 import { Col, Stack, Button } from 'react-bootstrap';
 import Badge from 'react-bootstrap/Badge';
+import Accordion from 'react-bootstrap/Accordion';
+import Table from 'react-bootstrap/Table';
 
 function logToComponent(log) {
   return (
@@ -16,22 +18,50 @@ function logToComponent(log) {
   );
 }
 
+function propertiesToTable(properties) {
+  properties.sort(
+    (property, anotherProperty) => property.index - anotherProperty.index
+  );
+
+  return (
+    <Table striped bordered hover>
+      <thead>
+        <tr>
+          <th>Property name</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {properties.map((property, index) => (
+          <tr key={index}>
+            <td>{property.name}</td>
+            <td>{property.value}</td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+}
+
 function LogsViever({ logs }) {
   logs.sort((log, anotherLog) => log.index - anotherLog.index);
+  console.log(logs);
   return (
-    <div
+    <Accordion
       style={{
         position: 'absolute',
-        height: '95%',
-        widht: '95%',
+        width: '97%',
+        height: '93%',
         overflowY: 'auto',
-        overflowX: 'auto',
       }}
     >
       {logs.map((log, index) => (
-        <ListGroup.Item key={index}>{logToComponent(log)}</ListGroup.Item>
+        <Accordion.Item eventKey={index} key={index}>
+          <Accordion.Header>{log.header}</Accordion.Header>
+          <Accordion.Body>{propertiesToTable(log.properties)}</Accordion.Body>
+        </Accordion.Item>
       ))}
-    </div>
+    </Accordion>
   );
 }
 

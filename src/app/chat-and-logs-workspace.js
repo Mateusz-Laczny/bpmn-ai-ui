@@ -47,12 +47,11 @@ function ChatAndLogsWorkspace({ onModelUpdate }) {
         log.modificationType.toLowerCase() === 'add' ? 'added' : 'removed';
       return {
         index: log.index,
-        parts: [
-          { type: 'text', text: `Node` },
-          { type: 'value', text: log.nodeId.name },
-          { type: 'text', text: `with id` },
-          { type: 'value', text: log.nodeId.id },
-          { type: 'text', text: `${action} to diagram` },
+        header: `${action.toUpperCase()} node ${log.nodeId.name}`,
+        properties: [
+          { index: 0, name: 'ID', value: log.nodeId.id },
+          { index: 1, name: 'Name', value: log.nodeId.name },
+          { index: 2, name: 'Element Type', value: log.elementType },
         ],
       };
     });
@@ -63,15 +62,14 @@ function ChatAndLogsWorkspace({ onModelUpdate }) {
         log.modificationType.toLowerCase() === 'add' ? 'added' : 'removed';
       return {
         index: log.index,
-        parts: [
-          { type: 'text', text: `Flow ${action} between node` },
-          { type: 'value', text: log.sourceId.name },
-          { type: 'text', text: `with id` },
-          { type: 'value', text: log.sourceId.id },
-          { type: 'text', text: `and node` },
-          { type: 'value', text: log.targetId.name },
-          { type: 'text', text: `with id` },
-          { type: 'value', text: log.targetId.id },
+        header: `${action.toUpperCase()} sequence flow between ${
+          log.sourceId.name
+        } and ${log.targetId.name}`,
+        properties: [
+          { index: 0, name: 'Source ID', value: log.sourceId.id },
+          { index: 1, name: 'Source Name', value: log.sourceId.name },
+          { index: 2, name: 'Target ID', value: log.targetId.id },
+          { index: 3, name: 'Target Name', value: log.targetId.name },
         ],
       };
     });
