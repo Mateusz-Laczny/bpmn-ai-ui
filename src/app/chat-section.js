@@ -50,6 +50,7 @@ function ChatSection({ messages, onMessageSent, onReset }) {
             onInput={onInput}
             onKeyDown={onKeyPress}
             className="me-auto"
+            style={{ resize: 'none' }}
           />
           <Button variant="danger" onClick={onReset}>
             Reset
