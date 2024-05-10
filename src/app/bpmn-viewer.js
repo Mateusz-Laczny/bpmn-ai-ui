@@ -55,7 +55,14 @@ const BpmnViewer = forwardRef(({ modelXml }, ref) => {
 
   useEffect(() => {
     if (modelXml && editorRef.current) {
-      editorRef.current.importXML(modelXml);
+      editorRef.current.importXML(modelXml).catch((error) => {
+        if (error.constructor === SyntaxError) {
+          // Strange error, but does not seem to break anything
+          return;
+        }
+
+        console.error(error.message);
+      });
       editorRef.current.get('canvas').zoom('fit-viewport');
     }
   }, [modelXml]);
