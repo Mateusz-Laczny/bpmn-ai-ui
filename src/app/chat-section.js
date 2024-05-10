@@ -1,19 +1,23 @@
-import { Col, Stack, Button } from 'react-bootstrap';
+import { Stack, Button } from 'react-bootstrap';
 import Message from './message';
-import InputGroup from 'react-bootstrap/InputGroup';
 import Form from 'react-bootstrap/Form';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
-function ChatSection({ messages, onMessageSent, onReset }) {
+function ChatSection({ messages, onMessageSent: onNewMessage }) {
   const [newMessage, setNewMessage] = useState('');
 
   const onInput = ({ target: { value } }) => setNewMessage(value);
+
+  const onMessageSent = () => {
+    onNewMessage(newMessage);
+    setNewMessage('');
+  };
+
   const onKeyPress = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       if (newMessage.trim() !== '') {
-        onMessageSent(newMessage);
-        setNewMessage('');
+        onMessageSent();
       }
     }
   };
@@ -51,9 +55,7 @@ function ChatSection({ messages, onMessageSent, onReset }) {
             className="me-auto"
             style={{ resize: 'none' }}
           />
-          <Button variant="danger" onClick={onReset}>
-            Reset
-          </Button>
+          <Button onClick={() => onMessageSent()}>Send</Button>
         </Stack>
       </Form>
     </div>

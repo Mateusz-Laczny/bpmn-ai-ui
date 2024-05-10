@@ -1,13 +1,38 @@
-import React, { useEffect, useRef } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useRef,
+  useImperativeHandle,
+} from 'react';
 
 import BpmnModeler from 'bpmn-js/lib/Modeler';
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
 
-export default function BpmnViewer({ modelXml }) {
+const BpmnViewer = forwardRef(({ modelXml }, ref) => {
   const containerRef = useRef(null);
   const editorRef = useRef(null);
+
+  const downloadModel = () => {
+    console.log('Downloading');
+    if (!editorRef.current) {
+      return;
+    }
+
+    editorRef.current.saveXML({ format: true }).then(({ xml }) => {
+      const blob = new Blob([xml], { type: 'application/xml' });
+      const downloadLink = document.createElement('a');
+      downloadLink.href = URL.createObjectURL(blob);
+      downloadLink.download = 'model.bpmn';
+      downloadLink.click();
+      URL.revokeObjectURL(downloadLink.href);
+    });
+  };
+
+  useImperativeHandle(ref, () => ({
+    downloadModel: downloadModel,
+  }));
 
   useEffect(() => {
     const container = containerRef.current;
@@ -31,8 +56,13 @@ export default function BpmnViewer({ modelXml }) {
   useEffect(() => {
     if (modelXml && editorRef.current) {
       editorRef.current.importXML(modelXml);
+      editorRef.current.get('canvas').zoom('fit-viewport');
     }
   }, [modelXml]);
 
   return <div style={{ height: '100%' }} ref={containerRef}></div>;
-}
+});
+
+BpmnViewer.displayName = 'BpmnViewer';
+
+export default BpmnViewer;

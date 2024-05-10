@@ -2,12 +2,10 @@
 
 import Container from 'react-bootstrap/Container';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import InitialPromptView from './initial-prompt-view';
 import MainView from './main-view';
-import Overlay from 'react-bootstrap/Overlay';
 import Spinner from 'react-bootstrap/Spinner';
-import { Stack } from 'react-bootstrap';
 
 export default function Home() {
   const [afterInitialPrompt, setAfterInitialPrompt] = useState(false);
@@ -21,6 +19,7 @@ export default function Home() {
         setModelXml(undefined);
         setMessages([]);
         setLogs([]);
+        setAfterInitialPrompt(false);
       }
     );
   };
@@ -110,12 +109,13 @@ export default function Home() {
   return (
     <main style={{ height: '100%' }}>
       {modelXml !== undefined ? (
-        <Container fluid style={{ height: '100%' }}>
+        <Container fluid style={{ height: '100%' }} className="py-4">
           <MainView
             modelXml={modelXml}
             messages={messages}
             logs={logs}
             onMessageSent={onMessageSent}
+            onReset={onReset}
           ></MainView>
         </Container>
       ) : (
