@@ -19,7 +19,6 @@ export default function Home() {
         setModelXml(undefined);
         setMessages([]);
         setLogs([]);
-        setAfterInitialPrompt(false);
       }
     );
   };
@@ -41,6 +40,7 @@ export default function Home() {
     }
 
     const data = await response.json();
+    console.log(data);
     setModelXml(data.bpmnXml);
 
     const updatedLogs = [...logs];
@@ -98,6 +98,7 @@ export default function Home() {
 
   const onReset = () => {
     startNewConversation();
+    setAfterInitialPrompt(false);
   };
 
   const onInitialPromptProvided = (initialPrompt) => {
@@ -108,7 +109,7 @@ export default function Home() {
 
   return (
     <main style={{ height: '100%' }}>
-      {modelXml !== undefined ? (
+      {modelXml ? (
         <Container fluid style={{ height: '100%' }} className="py-4">
           <MainView
             modelXml={modelXml}
