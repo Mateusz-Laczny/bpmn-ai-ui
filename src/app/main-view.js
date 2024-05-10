@@ -6,7 +6,10 @@ import ChatAndLogsWorkspace from './chat-and-logs-workspace';
 export default function MainView({ modelXml, messages, logs, onMessageSent }) {
   return (
     <Row style={{ height: '100%' }}>
-      <Col xs={8} className="position-relative">
+      <Col
+        xs={8}
+        className="position-relative border border-3 rounded my-3 ms-3"
+      >
         <BpmnEditor modelXml={modelXml}></BpmnEditor>
       </Col>
       <Col
