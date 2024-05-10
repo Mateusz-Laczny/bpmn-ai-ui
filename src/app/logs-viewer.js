@@ -45,7 +45,6 @@ function propertiesToTable(properties) {
 
 function LogsViever({ logs }) {
   logs.sort((log, anotherLog) => log.index - anotherLog.index);
-  console.log(logs);
   return (
     <Accordion
       style={{

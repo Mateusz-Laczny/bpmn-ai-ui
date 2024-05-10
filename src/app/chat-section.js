@@ -9,7 +9,6 @@ function ChatSection({ messages, onMessageSent, onReset }) {
 
   const onInput = ({ target: { value } }) => setNewMessage(value);
   const onKeyPress = (event) => {
-    console.log(event);
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       if (newMessage.trim() !== '') {

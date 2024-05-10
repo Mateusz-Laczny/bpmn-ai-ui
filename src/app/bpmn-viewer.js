@@ -29,7 +29,7 @@ export default function BpmnViewer({ modelXml }) {
   }, []);
 
   useEffect(() => {
-    if (editorRef.current) {
+    if (modelXml && editorRef.current) {
       editorRef.current.importXML(modelXml);
     }
   }, [modelXml]);
