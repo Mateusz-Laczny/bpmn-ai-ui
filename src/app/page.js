@@ -1,21 +1,23 @@
 'use client';
 
-import BpmnEditor from './bpmn-editor';
 import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import ChatSection from './chat-section';
-import { useState } from 'react';
-import ChatAndLogsWorkspace from './chat-and-logs-workspace';
+import { useState, useRef } from 'react';
 import InitialPromptView from './initial-prompt-view';
+import MainView from './main-view';
+import Overlay from 'react-bootstrap/Overlay';
+import Spinner from 'react-bootstrap/Spinner';
+import { Stack } from 'react-bootstrap';
 
 export default function Home() {
-  const [modelXml, setModelXml] = useState(undefined);
   const [afterInitialPrompt, setAfterInitialPrompt] = useState(false);
+  const [
+    afterModelGeneratedForInitialPrompt,
+    setAfterModelGeneratedForInitialPrompt,
+  ] = useState(false);
 
-  const onModelUpdate = (updatedModelXml) => {
-    setModelXml(updatedModelXml);
+  const onModelGeneratedForInitialPrompt = () => {
+    setAfterModelGeneratedForInitialPrompt(true);
   };
 
   const onInitialPromptProvided = () => {
@@ -24,41 +26,40 @@ export default function Home() {
 
   return (
     <main style={{ height: '100%' }}>
-      {afterInitialPrompt ? (
+      {afterModelGeneratedForInitialPrompt ? (
         <Container fluid style={{ height: '100%' }}>
-          <Row style={{ height: '100%' }}>
-            <Col xs={8} className="position-relative">
-              {modelXml ? (
-                <BpmnEditor modelXml={modelXml}></BpmnEditor>
-              ) : (
-                <div style={{ height: '100%', alignContent: 'center' }}>
-                  <h2 className="position-absolute top-50 start-50 translate-middle">
-                    Tip: Send a message to the Assistant, to start creating the
-                    model!
-                  </h2>
-                </div>
-              )}
-            </Col>
-            <Col
-              className="border border-dark-subtle rounded-3 mx-3 my-3"
-              style={{ backgroundColor: 'black', position: 'relative' }}
-            >
-              <ChatAndLogsWorkspace
-                onModelUpdate={onModelUpdate}
-              ></ChatAndLogsWorkspace>
-            </Col>
-          </Row>
+          <MainView></MainView>
         </Container>
       ) : (
         <Container
-          className="position-relative gray-600"
+          className="position-relative m-0 p-0"
+          fluid
           style={{ height: '100%' }}
         >
-          <div className="position-absolute top-50 start-50 translate-middle p-4 border border-3 rounded">
-            <InitialPromptView
-              onInitialPromptProvided={onInitialPromptProvided}
-            ></InitialPromptView>
-          </div>
+          {afterInitialPrompt ? (
+            <div className="position-absolute top-50 start-50 translate-middle p-4 border border-3 rounded">
+              <h4>Please wait while the model is being generated...</h4>
+              <div className="mt-3" style={{ display: 'flex' }}>
+                <Spinner
+                  animation="border"
+                  role="status"
+                  style={{
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <span className="visually-hidden">Generating model...</span>
+                </Spinner>
+              </div>
+            </div>
+          ) : (
+            <div className="position-absolute top-50 start-50 translate-middle p-4 border border-3 rounded">
+              <InitialPromptView
+                onInitialPromptProvided={onInitialPromptProvided}
+              ></InitialPromptView>
+            </div>
+          )}
         </Container>
       )}
     </main>
