@@ -6,21 +6,27 @@ import { useState } from 'react';
 import InitialPromptView from './initial-prompt-view';
 import MainView from './main-view';
 import Spinner from 'react-bootstrap/Spinner';
+import Toast from 'react-bootstrap/Toast';
+import ToastContainer from 'react-bootstrap/ToastContainer';
 
 export default function Home() {
   const [afterInitialPrompt, setAfterInitialPrompt] = useState(false);
   const [modelXml, setModelXml] = useState(undefined);
   const [messages, setMessages] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [showErrorToast, setShowErrorToast] = useState(false);
 
   const startNewConversation = () => {
-    fetch('http://localhost:8080/generate/v2/start', { method: 'POST' }).then(
-      (_response) => {
+    fetch('http://localhost:8080/generate/v2/start', { method: 'POST' })
+      .then((_response) => {
         setModelXml(undefined);
         setMessages([]);
         setLogs([]);
-      }
-    );
+      })
+      .catch(() => {
+        setShowErrorToast(true);
+        setAfterInitialPrompt(false);
+      });
   };
 
   const fetchResponse = async (requestText) => {
@@ -89,11 +95,16 @@ export default function Home() {
     const messagesWithUserMessage = [...messages];
     messagesWithUserMessage.push(newMessageProperties);
     setMessages(messagesWithUserMessage);
-    fetchResponse(newMessageProperties.text).then((assistantMessage) => {
-      const messagesWithAssistantResponse = [...messagesWithUserMessage];
-      messagesWithAssistantResponse.push(assistantMessage);
-      setMessages(messagesWithAssistantResponse);
-    });
+    fetchResponse(newMessageProperties.text)
+      .then((assistantMessage) => {
+        const messagesWithAssistantResponse = [...messagesWithUserMessage];
+        messagesWithAssistantResponse.push(assistantMessage);
+        setMessages(messagesWithAssistantResponse);
+      })
+      .catch(() => {
+        setShowErrorToast(true);
+        setAfterInitialPrompt(false);
+      });
   };
 
   const onReset = () => {
@@ -149,6 +160,26 @@ export default function Home() {
               ></InitialPromptView>
             </div>
           )}
+          <ToastContainer
+            position="bottom-end"
+            className="p-3"
+            style={{ zIndex: 1 }}
+          >
+            <Toast
+              bg="danger"
+              onClose={() => setShowErrorToast(false)}
+              show={showErrorToast}
+              delay={5000}
+              autohide
+            >
+              <Toast.Header>
+                <strong className="me-auto">Error</strong>
+              </Toast.Header>
+              <Toast.Body className="text-white">
+                Could not generate the model. Please try again.
+              </Toast.Body>
+            </Toast>
+          </ToastContainer>
         </Container>
       )}
     </main>
