@@ -3,7 +3,8 @@ import Col from 'react-bootstrap/Col';
 import ChatAndLogsWorkspace from './chat-and-logs-workspace';
 import { Stack, Button, Container } from 'react-bootstrap';
 import BpmnViewer from './bpmn-viewer';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import Spinner from 'react-bootstrap/Spinner';
 
 export default function MainView({
   modelXml,
@@ -11,6 +12,7 @@ export default function MainView({
   logs,
   onMessageSent,
   onReset,
+  waitingForResponse,
 }) {
   const vieverRef = useRef();
 
@@ -23,9 +25,27 @@ export default function MainView({
       <Col xs={8} className="position-relative ms-3">
         <Container fluid className="p-0" style={{ height: '100%' }}>
           <Row className="border border-3 rounded" style={{ height: '95%' }}>
-            <div>
-              <BpmnViewer modelXml={modelXml} ref={vieverRef}></BpmnViewer>
-            </div>
+            {waitingForResponse ? (
+              <div
+                className="position-absolute top-50 start-50 translate-middle p-4"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                }}
+              >
+                <h2>Processing request...</h2>
+                <div className="mt-3">
+                  <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Generating model</span>
+                  </Spinner>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <BpmnViewer modelXml={modelXml} ref={vieverRef}></BpmnViewer>
+              </div>
+            )}
           </Row>
           <Row
             className="mt-2 border border-3 rounded"

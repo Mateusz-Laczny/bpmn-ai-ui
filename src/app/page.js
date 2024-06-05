@@ -13,6 +13,7 @@ export default function Home() {
   const [afterInitialPrompt, setAfterInitialPrompt] = useState(false);
   const [modelXml, setModelXml] = useState(undefined);
   const [messages, setMessages] = useState([]);
+  const [waitingForResponse, setWaitingForResponse] = useState(false);
   const [logs, setLogs] = useState([]);
   const [showErrorToast, setShowErrorToast] = useState(false);
 
@@ -22,6 +23,7 @@ export default function Home() {
         setModelXml(undefined);
         setMessages([]);
         setLogs([]);
+        setWaitingForResponse(false);
       })
       .catch(() => {
         setShowErrorToast(true);
@@ -95,11 +97,13 @@ export default function Home() {
     const messagesWithUserMessage = [...messages];
     messagesWithUserMessage.push(newMessageProperties);
     setMessages(messagesWithUserMessage);
+    setWaitingForResponse(true);
     fetchResponse(newMessageProperties.text)
       .then((assistantMessage) => {
         const messagesWithAssistantResponse = [...messagesWithUserMessage];
         messagesWithAssistantResponse.push(assistantMessage);
         setMessages(messagesWithAssistantResponse);
+        setWaitingForResponse(false);
       })
       .catch(() => {
         setShowErrorToast(true);
@@ -128,6 +132,7 @@ export default function Home() {
             logs={logs}
             onMessageSent={onMessageSent}
             onReset={onReset}
+            waitingForResponse={waitingForResponse}
           ></MainView>
         </Container>
       ) : (
@@ -149,7 +154,7 @@ export default function Home() {
                     justifyContent: 'center',
                   }}
                 >
-                  <span className="visually-hidden">Generating model...</span>
+                  <span className="visually-hidden">Generating model</span>
                 </Spinner>
               </div>
             </div>
