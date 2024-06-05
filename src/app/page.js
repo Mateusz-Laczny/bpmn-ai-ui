@@ -9,6 +9,10 @@ import Spinner from 'react-bootstrap/Spinner';
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
 
+function isBlank(str) {
+  return !str || str.trim().length === 0;
+}
+
 export default function Home() {
   const [afterInitialPrompt, setAfterInitialPrompt] = useState(false);
   const [modelXml, setModelXml] = useState(undefined);
@@ -100,9 +104,11 @@ export default function Home() {
     setWaitingForResponse(true);
     fetchResponse(newMessageProperties.text)
       .then((assistantMessage) => {
-        const messagesWithAssistantResponse = [...messagesWithUserMessage];
-        messagesWithAssistantResponse.push(assistantMessage);
-        setMessages(messagesWithAssistantResponse);
+        if (!isBlank(assistantMessage.text)) {
+          const messagesWithAssistantResponse = [...messagesWithUserMessage];
+          messagesWithAssistantResponse.push(assistantMessage);
+          setMessages(messagesWithAssistantResponse);
+        }
         setWaitingForResponse(false);
       })
       .catch(() => {
