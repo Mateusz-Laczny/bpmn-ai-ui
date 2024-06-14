@@ -2,7 +2,7 @@
 
 import Container from 'react-bootstrap/Container';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import InitialPromptView from './initial-prompt-view';
 import MainView from './main-view';
 import Spinner from 'react-bootstrap/Spinner';
@@ -14,6 +14,7 @@ function isBlank(str) {
 }
 
 export default function Home() {
+  const [sessionId, setSessionId] = useState(undefined);
   const [afterInitialPrompt, setAfterInitialPrompt] = useState(false);
   const [modelXml, setModelXml] = useState(undefined);
   const [messages, setMessages] = useState([]);
@@ -22,11 +23,15 @@ export default function Home() {
   const [showErrorToast, setShowErrorToast] = useState(false);
 
   const startNewConversation = () => {
-    fetch('http://localhost:8080/generate/v2/start', { method: 'POST' })
-      .then((_response) => {
+    fetch('http://localhost:8080/llm2bpmn/sessions/create', { method: 'POST' })
+      .then((response) => {
         setModelXml(undefined);
         setMessages([]);
         setLogs([]);
+        return response.json();
+      })
+      .then((responseBody) => {
+        setSessionId(responseBody.sessionId);
         setWaitingForResponse(false);
       })
       .catch(() => {
@@ -35,9 +40,13 @@ export default function Home() {
       });
   };
 
+  useEffect(() => {
+    startNewConversation();
+  }, []);
+
   const fetchResponse = async (requestText) => {
-    const response = await fetch(
-      'http://localhost:8080/generate/v2/send/message',
+    const addPromptRequestResponse = await fetch(
+      `http://localhost:8080/llm2bpmn/sessions/${sessionId}/prompts/add`,
       {
         method: 'POST',
         headers: {
@@ -47,52 +56,63 @@ export default function Home() {
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!addPromptRequestResponse.ok) {
+      throw new Error(`HTTP error! status: ${addPromptRequestResponse.status}`);
     }
 
-    const data = await response.json();
-    console.log(data);
-    setModelXml(data.bpmnXml);
+    const generateCompletionResponse = await fetch(
+      `http://localhost:8080/llm2bpmn/sessions/${sessionId}/completions/generate`,
+      {
+        method: 'POST',
+      }
+    );
+
+    const generationResult = await generateCompletionResponse.json();
+    setModelXml(generationResult.bpmnXml);
 
     const updatedLogs = [...logs];
-    const nodeModificationLogs = data.nodeModificationLogs.map((log) => {
-      const action =
-        log.modificationType.toLowerCase() === 'add' ? 'added' : 'removed';
-      return {
-        index: log.index,
-        header: `${action.toUpperCase()} node ${log.nodeId.name}`,
-        properties: [
-          { index: 0, name: 'ID', value: log.nodeId.id },
-          { index: 1, name: 'Name', value: log.nodeId.name },
-          { index: 2, name: 'Element Type', value: log.elementType },
-        ],
-      };
-    });
+    const nodeModificationLogs = generationResult.nodeModificationLogs.map(
+      (log) => {
+        const action =
+          log.modificationType.toLowerCase() === 'add' ? 'added' : 'removed';
+        return {
+          index: log.index,
+          header: `${action.toUpperCase()} node ${log.nodeId.name}`,
+          properties: [
+            { index: 0, name: 'ID', value: log.nodeId.id },
+            { index: 1, name: 'Name', value: log.nodeId.name },
+            { index: 2, name: 'Element Type', value: log.elementType },
+          ],
+        };
+      }
+    );
+
     updatedLogs.push(...nodeModificationLogs);
 
-    const flowModificationLogs = data.flowModificationLogs.map((log) => {
-      const action =
-        log.modificationType.toLowerCase() === 'add' ? 'added' : 'removed';
-      return {
-        index: log.index,
-        header: `${action.toUpperCase()} sequence flow between ${
-          log.sourceId.name
-        } and ${log.targetId.name}`,
-        properties: [
-          { index: 0, name: 'Source ID', value: log.sourceId.id },
-          { index: 1, name: 'Source Name', value: log.sourceId.name },
-          { index: 2, name: 'Target ID', value: log.targetId.id },
-          { index: 3, name: 'Target Name', value: log.targetId.name },
-        ],
-      };
-    });
+    const flowModificationLogs = generationResult.flowModificationLogs.map(
+      (log) => {
+        const action =
+          log.modificationType.toLowerCase() === 'add' ? 'added' : 'removed';
+        return {
+          index: log.index,
+          header: `${action.toUpperCase()} sequence flow between ${
+            log.sourceId.name
+          } and ${log.targetId.name}`,
+          properties: [
+            { index: 0, name: 'Source ID', value: log.sourceId.id },
+            { index: 1, name: 'Source Name', value: log.sourceId.name },
+            { index: 2, name: 'Target ID', value: log.targetId.id },
+            { index: 3, name: 'Target Name', value: log.targetId.name },
+          ],
+        };
+      }
+    );
     updatedLogs.push(...flowModificationLogs);
     setLogs(updatedLogs);
 
     return {
       user: 'Assistant',
-      text: data.responseContent,
+      text: generationResult.responseContent,
     };
   };
 
