@@ -21,8 +21,11 @@ export default function Home() {
   const [waitingForResponse, setWaitingForResponse] = useState(false);
   const [logs, setLogs] = useState([]);
   const [showErrorToast, setShowErrorToast] = useState(false);
+  const [errorToastMessage, setErrorToastMessage] = useState(
+    'An error occured, please try again.'
+  );
 
-  const startNewConversation = () => {
+  const startNewConversation = (onOkCallback, onErrorCallback) => {
     fetch('http://localhost:8080/llm2bpmn/sessions/create', { method: 'POST' })
       .then((response) => {
         setModelXml(undefined);
@@ -34,14 +37,41 @@ export default function Home() {
         setSessionId(responseBody.sessionId);
         setWaitingForResponse(false);
       })
-      .catch(() => {
+      .catch((e) => {
+        const callbackResult = onErrorCallback(e);
+        if (callbackResult !== undefined) {
+          setShowErrorToast(true);
+          setErrorToastMessage(callbackResult);
+        }
+      });
+
+    onOkCallback();
+  };
+
+  const onReset = () => {
+    startNewConversation(
+      () => setAfterInitialPrompt(false),
+      (_e) => {
+        setErrorToastMessage(
+          'Session could not be initialized correctly. Try refreshing the page.'
+        );
         setShowErrorToast(true);
         setAfterInitialPrompt(false);
-      });
+      }
+    );
   };
 
   useEffect(() => {
-    startNewConversation();
+    startNewConversation(
+      () => {},
+      (_e) => {
+        setErrorToastMessage(
+          'Session could not be initialized correctly. Try refreshing the page.'
+        );
+        setShowErrorToast(true);
+        setAfterInitialPrompt(false);
+      }
+    );
   }, []);
 
   const fetchResponse = async (requestText) => {
@@ -68,6 +98,10 @@ export default function Home() {
     );
 
     const generationResult = await generateCompletionResponse.json();
+    const generationSuccessful =
+      generationResult.finishReason.toLowerCase() === 'ok';
+    if (!generationSuccessful) {
+    }
     setModelXml(generationResult.bpmnXml);
 
     const updatedLogs = [...logs];
@@ -116,12 +150,11 @@ export default function Home() {
     };
   };
 
-  const onMessageSent = (messageText) => {
+  const onMessageSent = (messageText, onOkCallback, onErrorCallback) => {
     const newMessageProperties = { user: 'User', text: messageText };
     const messagesWithUserMessage = [...messages];
     messagesWithUserMessage.push(newMessageProperties);
     setMessages(messagesWithUserMessage);
-    setWaitingForResponse(true);
     fetchResponse(newMessageProperties.text)
       .then((assistantMessage) => {
         if (!isBlank(assistantMessage.text)) {
@@ -129,23 +162,30 @@ export default function Home() {
           messagesWithAssistantResponse.push(assistantMessage);
           setMessages(messagesWithAssistantResponse);
         }
-        setWaitingForResponse(false);
       })
-      .catch(() => {
-        setShowErrorToast(true);
-        setAfterInitialPrompt(false);
+      .catch((e) => {
+        const callbackResult = onErrorCallback(e);
+        if (callbackResult !== undefined) {
+          setShowErrorToast(true);
+          setErrorToastMessage(callbackResult);
+        }
       });
-  };
 
-  const onReset = () => {
-    startNewConversation();
-    setAfterInitialPrompt(false);
+    onOkCallback();
   };
 
   const onInitialPromptProvided = (initialPrompt) => {
     setAfterInitialPrompt(true);
-    startNewConversation();
-    onMessageSent(initialPrompt);
+    setWaitingForResponse(true);
+    setShowErrorToast(false);
+    onMessageSent(
+      initialPrompt,
+      () => {
+        setWaitingForResponse(false);
+        return 'Could not generate the model. Please try again.';
+      },
+      (_e) => setAfterInitialPrompt(false)
+    );
   };
 
   return (
@@ -207,7 +247,7 @@ export default function Home() {
                 <strong className="me-auto">Error</strong>
               </Toast.Header>
               <Toast.Body className="text-white">
-                Could not generate the model. Please try again.
+                {errorToastMessage}
               </Toast.Body>
             </Toast>
           </ToastContainer>

@@ -9,7 +9,11 @@ function ChatSection({ messages, onMessageSent: onNewMessage }) {
   const onInput = ({ target: { value } }) => setNewMessage(value);
 
   const onMessageSent = () => {
-    onNewMessage(newMessage);
+    onNewMessage(
+      newMessage,
+      () => 'Could not fufil request, please try agian.',
+      () => true
+    );
     setNewMessage('');
   };
 
