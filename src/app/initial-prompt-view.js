@@ -5,11 +5,16 @@ import { Stack, Button } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import { useState } from 'react';
 
-export default function InitialPromptView({ onInitialPromptProvided }) {
+export default function InitialPromptView({ onInitialInfo }) {
+  const [apiKey, setApiKey] = useState('');
   const [initialPrompt, setInitialPrompt] = useState('');
   const [validated, setValidated] = useState(false);
 
-  const handleInputChange = (e) => {
+  const handleApiKeyChange = (e) => {
+    setApiKey(e.target.value);
+  };
+
+  const handlePromptDescriptionChange = (e) => {
     setInitialPrompt(e.target.value);
   };
 
@@ -19,7 +24,10 @@ export default function InitialPromptView({ onInitialPromptProvided }) {
       event.preventDefault();
       event.stopPropagation();
     } else {
-      onInitialPromptProvided(initialPrompt);
+      onInitialInfo({
+        apiKey: apiKey,
+        description: initialPrompt,
+      });
     }
 
     setValidated(true);
@@ -35,11 +43,28 @@ export default function InitialPromptView({ onInitialPromptProvided }) {
           This description will be used to generate the initial draft of the
           BPMN model. Try to describe the process as accurately as possible.
         </div>
+        <Form.Label as="h5" className="mt-4">
+          OpenAI API key
+        </Form.Label>
+        <Form.Control
+          value={apiKey}
+          onChange={handleApiKeyChange}
+          required
+          placeholder="OpenAI API Key"
+          type="text"
+          className="mt-2"
+        />
+        <Form.Control.Feedback type="invalid">
+          Please provide an API key
+        </Form.Control.Feedback>
+        <Form.Label as="h5" className="mt-3">
+          Process description
+        </Form.Label>
         <Form.Control
           as="textarea"
           rows={6}
           value={initialPrompt}
-          onChange={handleInputChange}
+          onChange={handlePromptDescriptionChange}
           required
           placeholder="Proces description goes here"
           type="text"

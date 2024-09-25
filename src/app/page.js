@@ -2,7 +2,7 @@
 
 import Container from 'react-bootstrap/Container';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import InitialPromptView from './initial-prompt-view';
 import MainView from './main-view';
 import Spinner from 'react-bootstrap/Spinner';
@@ -14,7 +14,8 @@ function isBlank(str) {
 }
 
 export default function Home() {
-  const [sessionId, setSessionId] = useState(undefined);
+  const [sessionId, setSessionId] = useState(null);
+  const [apiKey, setApiKey] = useState(null);
   const [afterInitialPrompt, setAfterInitialPrompt] = useState(false);
   const [modelXml, setModelXml] = useState(undefined);
   const [messages, setMessages] = useState([]);
@@ -25,58 +26,43 @@ export default function Home() {
     'An error occured, please try again.'
   );
 
-  const startNewConversation = (onOkCallback, onErrorCallback) => {
-    fetch('http://localhost:8080/llm2bpmn/sessions/create', { method: 'POST' })
-      .then((response) => {
-        setModelXml(undefined);
-        setMessages([]);
-        setLogs([]);
-        return response.json();
-      })
-      .then((responseBody) => {
-        setSessionId(responseBody.sessionId);
-        setWaitingForResponse(false);
-      })
-      .catch((e) => {
-        const callbackResult = onErrorCallback(e);
-        if (callbackResult !== undefined) {
-          setShowErrorToast(true);
-          setErrorToastMessage(callbackResult);
-        }
-      });
-
-    onOkCallback();
+  const startNewConversation = async (apiKey) => {
+    const requestBody = { apiKey: apiKey };
+    const response = await fetch(
+      'http://localhost:8080/llm2bpmn/sessions/create',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      }
+    );
+    return await response.json();
   };
 
   const onReset = () => {
-    startNewConversation(
-      () => setAfterInitialPrompt(false),
-      (_e) => {
+    startNewConversation(apiKey)
+      .then((receivedSessionId) => {
+        setSessionId(receivedSessionId);
+        setModelXml(undefined);
+        setMessages([]);
+        setLogs([]);
+      })
+      .catch((_error) => {
         setErrorToastMessage(
           'Session could not be initialized correctly. Try refreshing the page.'
         );
         setShowErrorToast(true);
-        setAfterInitialPrompt(false);
-      }
-    );
+      })
+      .finally(() => {
+        setWaitingForResponse(false);
+      });
   };
 
-  useEffect(() => {
-    startNewConversation(
-      () => {},
-      (_e) => {
-        setErrorToastMessage(
-          'Session could not be initialized correctly. Try refreshing the page.'
-        );
-        setShowErrorToast(true);
-        setAfterInitialPrompt(false);
-      }
-    );
-  }, []);
-
-  const fetchResponse = async (requestText) => {
+  const getCompletionForPrompt = async (currentSessionId, requestText) => {
     const addPromptRequestResponse = await fetch(
-      `http://localhost:8080/llm2bpmn/sessions/${sessionId}/prompts/add`,
+      `http://localhost:8080/llm2bpmn/sessions/${currentSessionId}/prompts/add`,
       {
         method: 'POST',
         headers: {
@@ -91,7 +77,7 @@ export default function Home() {
     }
 
     const generateCompletionResponse = await fetch(
-      `http://localhost:8080/llm2bpmn/sessions/${sessionId}/completions/generate`,
+      `http://localhost:8080/llm2bpmn/sessions/${currentSessionId}/completions/generate`,
       {
         method: 'POST',
       }
@@ -150,42 +136,57 @@ export default function Home() {
     };
   };
 
-  const onMessageSent = (messageText, onOkCallback, onErrorCallback) => {
+  const onMessageSent = async (currentSessionId, messageText) => {
     const newMessageProperties = { user: 'User', text: messageText };
     const messagesWithUserMessage = [...messages];
     messagesWithUserMessage.push(newMessageProperties);
     setMessages(messagesWithUserMessage);
-    fetchResponse(newMessageProperties.text)
-      .then((assistantMessage) => {
-        if (!isBlank(assistantMessage.text)) {
-          const messagesWithAssistantResponse = [...messagesWithUserMessage];
-          messagesWithAssistantResponse.push(assistantMessage);
-          setMessages(messagesWithAssistantResponse);
-        }
-      })
-      .catch((e) => {
-        const callbackResult = onErrorCallback(e);
-        if (callbackResult !== undefined) {
-          setShowErrorToast(true);
-          setErrorToastMessage(callbackResult);
-        }
-      });
-
-    onOkCallback();
+    const assistantMessage = await getCompletionForPrompt(
+      currentSessionId,
+      messageText
+    );
+    return assistantMessage.text;
   };
 
-  const onInitialPromptProvided = (initialPrompt) => {
+  const updateMessagesWithNaturalLanguageResponse = (
+    completionNaturalLanguageResponse
+  ) => {
+    console.log(completionNaturalLanguageResponse);
+    if (completionNaturalLanguageResponse) {
+      console.log('test');
+      const requestsWithNaturalLanguageResponse = [...messagesWithUserMessage];
+      requestsWithNaturalLanguageResponse.push(
+        completionNaturalLanguageResponse
+      );
+      setMessages(requestsWithNaturalLanguageResponse);
+    }
+  };
+
+  const onInitialInfoProvided = (initialInfo) => {
     setAfterInitialPrompt(true);
     setWaitingForResponse(true);
     setShowErrorToast(false);
-    onMessageSent(
-      initialPrompt,
-      () => {
+    const providedApiKey = initialInfo.apiKey;
+    setApiKey(providedApiKey);
+    startNewConversation(providedApiKey)
+      .then((receivedSessionId) => {
+        setSessionId(receivedSessionId.sessionId);
+        return onMessageSent(
+          receivedSessionId.sessionId,
+          initialInfo.description
+        );
+      })
+      .then(updateMessagesWithNaturalLanguageResponse)
+      .catch((_error) => {
+        setErrorToastMessage(
+          'Session could not be initialized correctly. Try refreshing the page.'
+        );
+        setShowErrorToast(true);
+        setAfterInitialPrompt(false);
+      })
+      .finally(() => {
         setWaitingForResponse(false);
-        return 'Could not generate the model. Please try again.';
-      },
-      (_e) => setAfterInitialPrompt(false)
-    );
+      });
   };
 
   return (
@@ -196,7 +197,19 @@ export default function Home() {
             modelXml={modelXml}
             messages={messages}
             logs={logs}
-            onMessageSent={onMessageSent}
+            onMessageSent={(requestText) => {
+              onMessageSent(sessionId, requestText)
+                .then(updateMessagesWithNaturalLanguageResponse)
+                .catch((_e) => {
+                  setErrorToastMessage(
+                    'Generation process failed. Please try again..'
+                  );
+                  setShowErrorToast(true);
+                })
+                .finally(() => {
+                  setWaitingForResponse(false);
+                });
+            }}
             onReset={onReset}
             waitingForResponse={waitingForResponse}
           ></MainView>
@@ -227,7 +240,7 @@ export default function Home() {
           ) : (
             <div className="position-absolute top-50 start-50 translate-middle p-4 border border-3 rounded">
               <InitialPromptView
-                onInitialPromptProvided={onInitialPromptProvided}
+                onInitialInfo={onInitialInfoProvided}
               ></InitialPromptView>
             </div>
           )}

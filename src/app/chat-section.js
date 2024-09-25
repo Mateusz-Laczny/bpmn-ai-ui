@@ -3,24 +3,20 @@ import Message from './message';
 import Form from 'react-bootstrap/Form';
 import { useState } from 'react';
 
-function ChatSection({ messages, onMessageSent: onNewMessage }) {
-  const [newMessage, setNewMessage] = useState('');
+function ChatSection({ messages, onMessageSent: onNewRequestSubmitted }) {
+  const [newRequestText, setNewRequestText] = useState('');
 
-  const onInput = ({ target: { value } }) => setNewMessage(value);
+  const onInput = ({ target: { value } }) => setNewRequestText(value);
 
   const onMessageSent = () => {
-    onNewMessage(
-      newMessage,
-      () => 'Could not fufil request, please try agian.',
-      () => true
-    );
-    setNewMessage('');
+    onNewRequestSubmitted(newRequestText);
+    setNewRequestText('');
   };
 
   const onKeyPress = (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      if (newMessage.trim() !== '') {
+      if (newRequestText.trim() !== '') {
         onMessageSent();
       }
     }
@@ -53,7 +49,7 @@ function ChatSection({ messages, onMessageSent: onNewMessage }) {
           <Form.Control
             as="textarea"
             aria-label="Message"
-            value={newMessage}
+            value={newRequestText}
             onInput={onInput}
             onKeyDown={onKeyPress}
             className="me-auto"
